@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance & Leave System</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase Core SDKs (script.js se PEHLE aane chahiye) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header class="navbar">
+    <div class="logo">
+      <i class="fa-solid fa-clipboard-user"></i>
+      <span>Attendance Portal</span>
+    </div>
+    <div class="user-controls">
+      <span id="adminBadge" class="admin-badge badge-user">
+        <i class="fa-solid fa-user"></i> Public View
+      </span>
+      <button id="adminAuthBtn" class="btn btn-primary" onclick="toggleAdminLogin()">
+        <i class="fa-solid fa-lock"></i> Admin Login
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Admin Management Panel (Initially Hidden) -->
+    <section id="adminPanel" class="card admin-section hidden">
+      <h3><i class="fa-solid fa-user-gear"></i> Admin Management Panel</h3>
+      <div class="add-member-form">
+        <input type="text" id="newMemberName" placeholder="Naya Member Naam..." />
+        <select id="newMemberRole">
+          <option value="School Student">School Student</option>
+          <option value="Home Chores">Home Chores</option>
+        </select>
+        <button class="btn btn-success" onclick="addMember()">
+          <i class="fa-solid fa-plus"></i> Add Member
+        </button>
+      </div>
+      <div id="adminMemberList" class="member-list-box" style="margin-top: 15px;"></div>
+    </section>
+
+    <!-- Daily Attendance Grid -->
+    <section class="card">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-calendar-day"></i> Daily Attendance</h3>
+        <input type="date" id="attendanceDate" onchange="renderAttendanceGrid()" />
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Task</th>
+              <th>Status (P/A/L)</th>
+              <th>Action / Lock</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceGridBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Leave Application Form & Inbox -->
+    <section class="card-grid">
+      <div class="card">
+        <h3><i class="fa-solid fa-paper-plane"></i> Apply for Leave</h3>
+        <form onsubmit="handleLeaveSubmit(event)">
+          <div class="form-group">
+            <label>Member Select Karein:</label>
+            <select id="leaveMemberSelect" required></select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>From Date:</label>
+              <input type="date" id="leaveFromDate" required />
+            </div>
+            <div class="form-group">
+              <label>To Date:</label>
+              <input type="date" id="leaveToDate" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Reason (Wajah):</label>
+            <textarea id="leaveReasonText" placeholder="Chhutti ki wajah likhein..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Submit Application
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3><i class="fa-solid fa-inbox"></i> Leave Inbox</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Dates</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="leaveInboxBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Edit Change Requests -->
+    <section class="card">
+      <h3><i class="fa-solid fa-pen-to-square"></i> Attendance Edit Requests</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Date</th>
+              <th>Requested Status</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="changeRequestsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Monthly Summary Report -->
+    <section class="card">
+      <h3><i class="fa-solid fa-chart-pie"></i> Monthly Summary Report</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Category</th>
+              <th>Present Days</th>
+              <th>Absent Days</th>
+              <th>Leaves</th>
+            </tr>
+          </thead>
+          <tbody id="reportTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4><i class="fa-solid fa-shield-halved"></i> Admin Authentication</h4>
+        <span class="close-btn" onclick="closeLoginModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p>Admin Control ke liye PIN enter karein:</p>
+        <input type="password" id="adminPinInput" placeholder="Enter PIN (Default: 0534)" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;" />
+        <button class="btn btn-primary" style="width: 100%;" onclick="authenticateAdmin()">Verify & Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTENDANCE CHANGE REQUEST MODAL -->
+  <div id="requestModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Request Attendance Edit</h4>
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p id="modalSubText" style="font-size: 13px; color: #666; margin-bottom: 10px;"></p>
+        <input type="hidden" id="reqMemberId" />
+        <input type="hidden" id="reqDate" />
+        <div class="form-group">
+          <label>New Status Select Karein:</label>
+          <select id="reqNewStatus">
+            <option value="P">Present (P)</option>
+            <option value="A">Absent (A)</option>
+            <option value="L">Leave (L)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reason (Badalne ki Wajah):</label>
+          <textarea id="reqReason" placeholder="Wajah likhna compulsory hai..."></textarea>
+        </div>
+        <button class="btn btn-success" style="width: 100%;" onclick="submitChangeRequest()">Send Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic JS -->
+  <script src="script.js"></script>
+</body>
+</html>
