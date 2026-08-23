@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Management Suite | Attendance & Leave</title>
+  
+  <!-- PWA Manifest Link -->
+  <link rel="manifest" href="manifest.json">
+  
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Firebase SDKs (v8 Web Version) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">
+      <i class="fa-solid fa-clipboard-user"></i> TaskTrack Pro
+    </div>
+    <div class="nav-actions">
+      <span id="adminBadge" class="admin-badge badge-user"><i class="fa-solid fa-user"></i> Public View</span>
+      <button id="adminAuthBtn" class="btn btn-outline" onclick="toggleAdminLogin()"><i class="fa-solid fa-lock"></i> Admin Login</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Admin Panel (Add & Delete Members) -->
+    <div id="adminPanel" class="card admin-card hidden">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-user-shield"></i> Admin Control Panel</h2>
+      </div>
+      <div class="form-grid" style="margin-bottom:15px;">
+        <input type="text" id="newMemberName" placeholder="Naya Member Naam (e.g. Sister, Rahul)" />
+        <select id="newMemberRole">
+          <option value="Home Chores">Home Chores (Ghar Ka Kaam)</option>
+          <option value="School Student">School Student</option>
+        </select>
+        <button class="btn btn-primary" onclick="addMember()"><i class="fa-solid fa-plus"></i> Add Member</button>
+      </div>
+
+      <!-- Delete Member List Section -->
+      <h3 style="font-size:14px; margin-bottom:8px; color:#555;"><i class="fa-solid fa-users"></i> Member Management (Hataane ke liye Remove dabayein):</h3>
+      <div id="adminMemberList">
+        <!-- Dynamic Member List with Remove Button -->
+      </div>
+    </div>
+
+    <!-- Section 1: Member List & Daily Attendance Grid -->
+    <div class="card">
+      <div class="card-header flex-between">
+        <h2><i class="fa-solid fa-calendar-check"></i> Daily Attendance Sheet</h2>
+        <div class="date-selector">
+          <label>Tareekh Select Karein: </label>
+          <input type="date" id="attendanceDate" onchange="renderAttendanceGrid()" />
+        </div>
+      </div>
+      
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Category</th>
+              <th>Task / Purpose</th>
+              <th>Status (Mark Once)</th>
+              <th>Action / Request</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceGridBody">
+            <!-- Dynamic Grid via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 2: Leave Application & Approval Section -->
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-envelope-open-text"></i> Leave Application System</h2>
+      </div>
+      <div class="grid-2-col">
+        <!-- Leave Form (Public) -->
+        <div class="sub-section">
+          <h3>Chutti Ke Liye Request Bhejein</h3>
+          <form id="leaveForm" onsubmit="handleLeaveSubmit(event)">
+            <div class="form-group">
+              <label>Member Chunein:</label>
+              <select id="leaveMemberSelect" required><option value="">Select Member</option></select>
+            </div>
+            <div class="form-group grid-2-col-inline">
+              <div>
+                <label>Kab Se:</label>
+                <input type="date" id="leaveFromDate" required />
+              </div>
+              <div>
+                <label>Kab Tak:</label>
+                <input type="date" id="leaveToDate" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Reason (Chutti ka kaaran):</label>
+              <textarea id="leaveReasonText" rows="3" placeholder="Aapko chutti kyu chahiye..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full"><i class="fa-solid fa-paper-plane"></i> Leave Application Send Karein</button>
+          </form>
+        </div>
+
+        <!-- Leave Requests Inbox (Admin Action / User View Status) -->
+        <div class="sub-section">
+          <h3>Leave Applications Inbox</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Dates</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Admin Action</th>
+                </tr>
+              </thead>
+              <tbody id="leaveInboxBody">
+                <!-- Dynamic Leave Requests via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Status Edit Requests -->
+    <div id="changeRequestsCard" class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-code-pull-request"></i> Attendance Edit Requests</h2>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Date</th>
+              <th>Requested Status</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Admin Action</th>
+            </tr>
+          </thead>
+          <tbody id="changeRequestsBody">
+            <!-- Dynamic Edit Requests via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 4: Analytics Report -->
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-chart-pie"></i> Work & School Monthly Report</h2>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Category</th>
+              <th>Total Present (P)</th>
+              <th>Total Absent (A)</th>
+              <th>Total Leave (L)</th>
+            </tr>
+          </thead>
+          <tbody id="reportTableBody">
+            <!-- Dynamic Report via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal for Attendance Change Request -->
+  <div id="requestModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h3>Attendance Correction Request</h3>
+      <p id="modalSubText">System me already attendance mark hai. Update ke liye Admin ko request bhejein.</p>
+      <input type="hidden" id="reqMemberId" />
+      <input type="hidden" id="reqDate" />
+      <div class="form-group">
+        <label>Kaunsa Status Chahiye?</label>
+        <select id="reqNewStatus">
+          <option value="P">Present (P)</option>
+          <option value="A">Absent (A)</option>
+          <option value="L">Leave (L)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reason (Aap status kyu badalna chahte hain?):</label>
+        <textarea id="reqReason" rows="3" placeholder="Sahi reason yahan likhein..." required></textarea>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitChangeRequest()">Request Admin Ko Bhejein</button>
+    </div>
+  </div>
+
+  <!-- Modal for Admin PIN Auth -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-content text-center">
+      <span class="close-btn" onclick="closeLoginModal()">&times;</span>
+      <h3><i class="fa-solid fa-lock"></i> Admin Authentication</h3>
+      <p>System Pin Enter Karein (Default Pin: <b>1234</b>)</p>
+      <input type="password" id="adminPinInput" class="pin-input" placeholder="****" maxlength="4" />
+      <button class="btn btn-success btn-full" onclick="authenticateAdmin()">Login as Admin</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
