@@ -15,7 +15,7 @@ const database = firebase.database();
 
 // State Variables
 let isAdmin = false;
-const ADMIN_PIN = "1234"; // Admin security passcode
+const ADMIN_PIN = "0534"; // Updated Admin Passcode
 
 let members = JSON.parse(localStorage.getItem('app_members')) || [
   { id: '1', name: 'Aap (Self)', role: 'School Student', task: 'School Attendance' },
@@ -60,9 +60,15 @@ function syncToCloud() {
 
 // Initialize Page
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById('attendanceDate').valueAsDate = new Date();
-  document.getElementById('leaveFromDate').valueAsDate = new Date();
-  document.getElementById('leaveToDate').valueAsDate = new Date();
+  if (document.getElementById('attendanceDate')) {
+    document.getElementById('attendanceDate').valueAsDate = new Date();
+  }
+  if (document.getElementById('leaveFromDate')) {
+    document.getElementById('leaveFromDate').valueAsDate = new Date();
+  }
+  if (document.getElementById('leaveToDate')) {
+    document.getElementById('leaveToDate').valueAsDate = new Date();
+  }
   
   listenToCloudData(); // Listen for live database changes
   refreshUI();
@@ -88,7 +94,7 @@ function saveData() {
 }
 
 // ==================== AUTH LOGIC ====================
-function toggleAdminLogin() {
+window.toggleAdminLogin = function() {
   if (isAdmin) {
     isAdmin = false;
     document.getElementById('adminBadge').className = "admin-badge badge-user";
@@ -98,11 +104,15 @@ function toggleAdminLogin() {
     refreshUI();
     alert("Admin Logged Out!");
   } else {
-    document.getElementById('loginModal').classList.remove('hidden');
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+    }
   }
-}
+};
 
-function authenticateAdmin() {
+window.authenticateAdmin = function() {
   const inputPin = document.getElementById('adminPinInput').value;
   if (inputPin === ADMIN_PIN) {
     isAdmin = true;
@@ -110,20 +120,25 @@ function authenticateAdmin() {
     document.getElementById('adminBadge').innerHTML = '<i class="fa-solid fa-user-check"></i> Admin Access';
     document.getElementById('adminAuthBtn').innerHTML = '<i class="fa-solid fa-lock-open"></i> Logout Admin';
     document.getElementById('adminPanel').classList.remove('hidden');
-    closeLoginModal();
+    window.closeLoginModal();
     refreshUI();
+    alert("Admin Login Successful!");
   } else {
     alert("Galat PIN! Dubara koshish karein.");
   }
   document.getElementById('adminPinInput').value = '';
-}
+};
 
-function closeLoginModal() {
-  document.getElementById('loginModal').classList.add('hidden');
-}
+window.closeLoginModal = function() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
 
 // ==================== 1. MEMBER MANAGEMENT ====================
-function addMember() {
+window.addMember = function() {
   const nameInput = document.getElementById('newMemberName');
   const roleSelect = document.getElementById('newMemberRole');
   
@@ -139,15 +154,15 @@ function addMember() {
   members.push(newMember);
   nameInput.value = '';
   saveData();
-}
+};
 
-function deleteMember(memberId) {
+window.deleteMember = function(memberId) {
   const member = members.find(m => m.id === memberId);
   if (confirm(`Kya aap "${member ? member.name : 'is member'}" ko list se hatana chahte hain?`)) {
     members = members.filter(m => m.id !== memberId);
     saveData();
   }
-}
+};
 
 function renderAdminMemberList() {
   const listContainer = document.getElementById('adminMemberList');
@@ -181,11 +196,12 @@ function refreshDropdowns() {
 }
 
 // ==================== 2. ATTENDANCE GRID ====================
-function renderAttendanceGrid() {
+window.renderAttendanceGrid = function() {
   const dateInput = document.getElementById('attendanceDate');
   if (!dateInput) return;
   const selectedDate = dateInput.value;
   const tbody = document.getElementById('attendanceGridBody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   const dayRecords = attendanceRecords[selectedDate] || {};
@@ -230,9 +246,9 @@ function renderAttendanceGrid() {
       </tr>
     `;
   });
-}
+};
 
-function markAttendance(memberId, status) {
+window.markAttendance = function(memberId, status) {
   const date = document.getElementById('attendanceDate').value;
   if (!attendanceRecords[date]) {
     attendanceRecords[date] = {};
@@ -240,21 +256,21 @@ function markAttendance(memberId, status) {
   
   attendanceRecords[date][memberId] = status;
   saveData();
-}
+};
 
 // ==================== 3. EDIT REQUESTS ====================
-function openRequestModal(memberId, memberName, date) {
+window.openRequestModal = function(memberId, memberName, date) {
   document.getElementById('reqMemberId').value = memberId;
   document.getElementById('reqDate').value = date;
   document.getElementById('modalSubText').innerText = `${memberName} ki date (${date}) ki attendance change karne ki request send karein.`;
   document.getElementById('requestModal').classList.remove('hidden');
-}
+};
 
-function closeModal() {
+window.closeModal = function() {
   document.getElementById('requestModal').classList.add('hidden');
-}
+};
 
-function submitChangeRequest() {
+window.submitChangeRequest = function() {
   const memberId = document.getElementById('reqMemberId').value;
   const date = document.getElementById('reqDate').value;
   const newStatus = document.getElementById('reqNewStatus').value;
@@ -272,10 +288,10 @@ function submitChangeRequest() {
   });
 
   document.getElementById('reqReason').value = '';
-  closeModal();
+  window.closeModal();
   saveData();
   alert("Attendance Change Request Admin ko bhej di gayi hai!");
-}
+};
 
 function renderChangeRequests() {
   const tbody = document.getElementById('changeRequestsBody');
@@ -311,7 +327,7 @@ function renderChangeRequests() {
   });
 }
 
-function approveChangeRequest(reqId) {
+window.approveChangeRequest = function(reqId) {
   const req = changeRequests.find(r => r.id === reqId);
   if (req) {
     req.status = 'Approved';
@@ -319,18 +335,18 @@ function approveChangeRequest(reqId) {
     attendanceRecords[req.date][req.memberId] = req.newStatus;
     saveData();
   }
-}
+};
 
-function rejectChangeRequest(reqId) {
+window.rejectChangeRequest = function(reqId) {
   const req = changeRequests.find(r => r.id === reqId);
   if (req) {
     req.status = 'Rejected';
     saveData();
   }
-}
+};
 
 // ==================== 4. LEAVE SYSTEM ====================
-function handleLeaveSubmit(e) {
+window.handleLeaveSubmit = function(e) {
   e.preventDefault();
   const memberId = document.getElementById('leaveMemberSelect').value;
   const from = document.getElementById('leaveFromDate').value;
@@ -349,7 +365,7 @@ function handleLeaveSubmit(e) {
   document.getElementById('leaveReasonText').value = '';
   saveData();
   alert("Leave Application Submitted! Admin Approve karega.");
-}
+};
 
 function renderLeaveInbox() {
   const tbody = document.getElementById('leaveInboxBody');
@@ -384,13 +400,13 @@ function renderLeaveInbox() {
   });
 }
 
-function updateLeaveStatus(leaveId, status) {
+window.updateLeaveStatus = function(leaveId, status) {
   const leave = leaveRequests.find(l => l.id === leaveId);
   if (leave) {
     leave.status = status;
     saveData();
   }
-}
+};
 
 // ==================== 5. MONTHLY REPORTS ====================
 function renderMonthlyReport() {
@@ -419,21 +435,3 @@ function renderMonthlyReport() {
     `;
   });
 }
-// FORCED ADMIN MODAL FIX
-window.toggleAdminLogin = function() {
-  const modal = document.getElementById('loginModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.style.display = 'block';
-  } else {
-    alert("Error: 'loginModal' ID wala div HTML me nahi mil raha hai!");
-  }
-};
-
-window.closeLoginModal = function() {
-  const modal = document.getElementById('loginModal');
-  if (modal) {
-    modal.classList.add('hidden');
-    modal.style.display = 'none';
-  }
-};
