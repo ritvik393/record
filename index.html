@@ -24,7 +24,7 @@
     </div>
     <div class="nav-actions">
       <span id="adminBadge" class="admin-badge badge-user"><i class="fa-solid fa-user"></i> Public View</span>
-      <button id="adminAuthBtn" class="btn btn-outline" onclick="if(typeof toggleAdminLogin==='function'){toggleAdminLogin();}else{document.getElementById('loginModal').classList.remove('hidden');document.getElementById('loginModal').style.display='flex';}">
+      <button type="button" id="adminAuthBtn" class="btn btn-outline" onclick="if(typeof toggleAdminLogin==='function'){toggleAdminLogin();}else{document.getElementById('loginModal').classList.remove('hidden');document.getElementById('loginModal').style.display='flex';}">
         <i class="fa-solid fa-lock"></i> Admin Login
       </button>
     </div>
@@ -43,7 +43,7 @@
           <option value="Home Chores">Home Chores (Ghar Ka Kaam)</option>
           <option value="School Student">School Student</option>
         </select>
-        <button class="btn btn-primary" onclick="addMember()"><i class="fa-solid fa-plus"></i> Add Member</button>
+        <button type="button" class="btn btn-primary" onclick="event.preventDefault(); addMember();"><i class="fa-solid fa-plus"></i> Add Member</button>
       </div>
 
       <!-- Delete Member List Section -->
@@ -205,11 +205,10 @@
         <label>Reason (Aap status kyu badalna chahte hain?):</label>
         <textarea id="reqReason" rows="3" placeholder="Sahi reason yahan likhein..." required></textarea>
       </div>
-      <button class="btn btn-primary btn-full" onclick="submitChangeRequest()">Request Admin Ko Bhejein</button>
+      <button type="button" class="btn btn-primary btn-full" onclick="submitChangeRequest()">Request Admin Ko Bhejein</button>
     </div>
   </div>
 
-  <!-- Modal for Admin PIN Auth -->
   <!-- Modal for Admin PIN Auth -->
   <div id="loginModal" class="modal hidden">
     <div class="modal-content text-center">
@@ -217,7 +216,7 @@
       <h3><i class="fa-solid fa-lock"></i> Admin Authentication</h3>
       <p>System Pin Enter Karein (Default Pin: <b>0534</b>)</p>
       <input type="password" id="adminPinInput" class="pin-input" placeholder="****" maxlength="4" />
-      <button class="btn btn-success btn-full" onclick="if(document.getElementById('adminPinInput').value === '0534'){ isAdmin = true; document.getElementById('adminBadge').className = 'admin-badge badge-admin'; document.getElementById('adminBadge').innerHTML = '<i class=&quot;fa-solid fa-user-check&quot;></i> Admin Access'; document.getElementById('adminAuthBtn').innerHTML = '<i class=&quot;fa-solid fa-lock-open&quot;></i> Logout Admin'; document.getElementById('adminPanel').classList.remove('hidden'); document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginModal').style.display = 'none'; if(typeof refreshUI === 'function') refreshUI(); alert('Admin Login Successful!'); } else { alert('Galat PIN!'); } document.getElementById('adminPinInput').value = '';">Login as Admin</button>
+      <button type="button" class="btn btn-success btn-full" onclick="if(document.getElementById('adminPinInput').value === '0534'){ window.isAdmin = true; document.getElementById('adminBadge').className = 'admin-badge badge-admin'; document.getElementById('adminBadge').innerHTML = '<i class=&quot;fa-solid fa-user-check&quot;></i> Admin Access'; document.getElementById('adminAuthBtn').innerHTML = '<i class=&quot;fa-solid fa-lock-open&quot;></i> Logout Admin'; document.getElementById('adminPanel').classList.remove('hidden'); document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginModal').style.display = 'none'; if(typeof refreshUI === 'function') refreshUI(); alert('Admin Login Successful!'); } else { alert('Galat PIN!'); } document.getElementById('adminPinInput').value = '';">Login as Admin</button>
     </div>
   </div>
 
