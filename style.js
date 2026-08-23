@@ -419,3 +419,21 @@ function renderMonthlyReport() {
     `;
   });
 }
+// FORCED ADMIN MODAL FIX
+window.toggleAdminLogin = function() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'block';
+  } else {
+    alert("Error: 'loginModal' ID wala div HTML me nahi mil raha hai!");
+  }
+};
+
+window.closeLoginModal = function() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
