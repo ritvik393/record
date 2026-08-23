@@ -9,13 +9,15 @@ const firebaseConfig = {
   appId: "1:163762786346:web:b3ca98f8d2dfee9923b353"
 };
 
-// Initialize Firebase Realtime Database
-firebase.initializeApp(firebaseConfig);
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const database = firebase.database();
 
 // State Variables
 let isAdmin = false;
-const ADMIN_PIN = "0534"; // Updated Admin Passcode
+const ADMIN_PIN = "0534";
 
 let members = JSON.parse(localStorage.getItem('app_members')) || [
   { id: '1', name: 'Aap (Self)', role: 'School Student', task: 'School Attendance' },
@@ -27,15 +29,17 @@ let attendanceRecords = JSON.parse(localStorage.getItem('app_attendance')) || {}
 let leaveRequests = JSON.parse(localStorage.getItem('app_leaves')) || [];
 let changeRequests = JSON.parse(localStorage.getItem('app_changes')) || [];
 
+let isRemoteUpdating = false;
+
 // ==================== FIREBASE REALTIME SYNC ====================
 function listenToCloudData() {
   database.ref('attendance_system').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      if (data.members) members = data.members;
+    if (data && !isRemoteUpdating) {
+      if (Array.isArray(data.members)) members = data.members;
       if (data.attendance) attendanceRecords = data.attendance;
-      if (data.leaves) leaveRequests = data.leaves;
-      if (data.changes) changeRequests = data.changes;
+      if (Array.isArray(data.leaves)) leaveRequests = data.leaves;
+      if (Array.isArray(data.changes)) changeRequests = data.changes;
 
       // Local storage sync
       localStorage.setItem('app_members', JSON.stringify(members));
@@ -43,18 +47,23 @@ function listenToCloudData() {
       localStorage.setItem('app_leaves', JSON.stringify(leaveRequests));
       localStorage.setItem('app_changes', JSON.stringify(changeRequests));
 
-      // Live UI refresh across all devices
-      refreshUI();
+      renderUIOnly();
     }
   });
 }
 
 function syncToCloud() {
+  isRemoteUpdating = true;
   database.ref('attendance_system').set({
     members: members,
     attendance: attendanceRecords,
     leaves: leaveRequests,
     changes: changeRequests
+  }).then(() => {
+    isRemoteUpdating = false;
+  }).catch((err) => {
+    console.error("Firebase Sync Error:", err);
+    isRemoteUpdating = false;
   });
 }
 
@@ -70,11 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('leaveToDate').valueAsDate = new Date();
   }
   
-  listenToCloudData(); // Listen for live database changes
+  listenToCloudData();
   refreshUI();
 });
 
-function refreshUI() {
+function renderUIOnly() {
   refreshDropdowns();
   renderAdminMemberList();
   renderAttendanceGrid();
@@ -83,14 +92,18 @@ function refreshUI() {
   renderMonthlyReport();
 }
 
+function refreshUI() {
+  renderUIOnly();
+}
+
 function saveData() {
   localStorage.setItem('app_members', JSON.stringify(members));
   localStorage.setItem('app_attendance', JSON.stringify(attendanceRecords));
   localStorage.setItem('app_leaves', JSON.stringify(leaveRequests));
   localStorage.setItem('app_changes', JSON.stringify(changeRequests));
   
-  syncToCloud(); // Save instantly to Firebase Cloud
-  refreshUI();
+  renderUIOnly();
+  syncToCloud();
 }
 
 // ==================== AUTH LOGIC ====================
@@ -142,18 +155,22 @@ window.addMember = function() {
   const nameInput = document.getElementById('newMemberName');
   const roleSelect = document.getElementById('newMemberRole');
   
-  if (!nameInput.value.trim()) return alert("Member naam likhna zaroori hai");
+  if (!nameInput || !nameInput.value.trim()) {
+    return alert("Member naam likhna zaroori hai!");
+  }
   
+  const roleVal = roleSelect ? roleSelect.value : 'Home Chores';
   const newMember = {
-    id: Date.now().toString(),
+    id: 'm_' + Date.now(),
     name: nameInput.value.trim(),
-    role: roleSelect.value,
-    task: roleSelect.value === 'School Student' ? 'School Attendance' : 'Bartan & Jhadu Pocha'
+    role: roleVal,
+    task: roleVal === 'School Student' ? 'School Attendance' : 'Daily Home Chores'
   };
 
   members.push(newMember);
   nameInput.value = '';
   saveData();
+  alert(newMember.name + " add ho gaye hain!");
 };
 
 window.deleteMember = function(memberId) {
@@ -169,7 +186,7 @@ function renderAdminMemberList() {
   if (!listContainer) return;
   listContainer.innerHTML = '';
 
-  if (members.length === 0) {
+  if (!members || members.length === 0) {
     listContainer.innerHTML = '<p style="color:#888; font-size:13px;">Koi member nahi hai. Naya add karein.</p>';
     return;
   }
@@ -250,6 +267,8 @@ window.renderAttendanceGrid = function() {
 
 window.markAttendance = function(memberId, status) {
   const date = document.getElementById('attendanceDate').value;
+  if (!date) return alert("Pehle Tareekh Select Karein!");
+  
   if (!attendanceRecords[date]) {
     attendanceRecords[date] = {};
   }
@@ -298,7 +317,7 @@ function renderChangeRequests() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  if (changeRequests.length === 0) {
+  if (!changeRequests || changeRequests.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="color:#999;">Koi Edit Request Nahi Hai</td></tr>`;
     return;
   }
@@ -353,6 +372,8 @@ window.handleLeaveSubmit = function(e) {
   const to = document.getElementById('leaveToDate').value;
   const reason = document.getElementById('leaveReasonText').value.trim();
 
+  if (!memberId) return alert("Pehle Member select karein!");
+
   leaveRequests.push({
     id: Date.now().toString(),
     memberId,
@@ -372,7 +393,7 @@ function renderLeaveInbox() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  if (leaveRequests.length === 0) {
+  if (!leaveRequests || leaveRequests.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:#999;">Koi Leave Request Nahi Hai</td></tr>`;
     return;
   }
