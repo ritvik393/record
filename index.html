@@ -5,26 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Management Suite | Attendance & Leave</title>
   
-  <!-- PWA Manifest Link -->
   <link rel="manifest" href="manifest.json">
-  
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-  <!-- Firebase SDKs (v8 Web Version) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
+  <!-- Navigation Bar -->
   <nav class="navbar">
     <div class="logo">
       <i class="fa-solid fa-clipboard-user"></i> TaskTrack Pro
     </div>
     <div class="nav-actions">
       <span id="adminBadge" class="admin-badge badge-user"><i class="fa-solid fa-user"></i> Public View</span>
-      <button type="button" id="adminAuthBtn" class="btn btn-outline" onclick="if(typeof toggleAdminLogin==='function'){toggleAdminLogin();}else{document.getElementById('loginModal').classList.remove('hidden');document.getElementById('loginModal').style.display='flex';}">
+      <button type="button" id="adminAuthBtn" class="btn btn-outline" onclick="openLoginModal()">
         <i class="fa-solid fa-lock"></i> Admin Login
       </button>
     </div>
@@ -32,7 +30,7 @@
 
   <div class="container">
 
-    <!-- Admin Panel (Add & Delete Members) -->
+    <!-- Admin Panel -->
     <div id="adminPanel" class="card admin-card hidden">
       <div class="card-header">
         <h2><i class="fa-solid fa-user-shield"></i> Admin Control Panel</h2>
@@ -43,17 +41,14 @@
           <option value="Home Chores">Home Chores (Ghar Ka Kaam)</option>
           <option value="School Student">School Student</option>
         </select>
-        <button type="button" class="btn btn-primary" onclick="event.preventDefault(); addMember();"><i class="fa-solid fa-plus"></i> Add Member</button>
+        <button type="button" class="btn btn-primary" onclick="handleAddMember()"><i class="fa-solid fa-plus"></i> Add Member</button>
       </div>
 
-      <!-- Delete Member List Section -->
-      <h3 style="font-size:14px; margin-bottom:8px; color:#555;"><i class="fa-solid fa-users"></i> Member Management (Hataane ke liye Remove dabayein):</h3>
-      <div id="adminMemberList">
-        <!-- Dynamic Member List with Remove Button -->
-      </div>
+      <h3 style="font-size:14px; margin-bottom:8px; color:#555;"><i class="fa-solid fa-users"></i> Member Management:</h3>
+      <div id="adminMemberList"></div>
     </div>
 
-    <!-- Section 1: Member List & Daily Attendance Grid -->
+    <!-- Attendance Grid -->
     <div class="card">
       <div class="card-header flex-between">
         <h2><i class="fa-solid fa-calendar-check"></i> Daily Attendance Sheet</h2>
@@ -74,20 +69,17 @@
               <th>Action / Request</th>
             </tr>
           </thead>
-          <tbody id="attendanceGridBody">
-            <!-- Dynamic Grid via JS -->
-          </tbody>
+          <tbody id="attendanceGridBody"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- Section 2: Leave Application & Approval Section -->
+    <!-- Leave System -->
     <div class="card">
       <div class="card-header">
         <h2><i class="fa-solid fa-envelope-open-text"></i> Leave Application System</h2>
       </div>
       <div class="grid-2-col">
-        <!-- Leave Form (Public) -->
         <div class="sub-section">
           <h3>Chutti Ke Liye Request Bhejein</h3>
           <form id="leaveForm" onsubmit="handleLeaveSubmit(event)">
@@ -106,14 +98,13 @@
               </div>
             </div>
             <div class="form-group">
-              <label>Reason (Chutti ka kaaran):</label>
-              <textarea id="leaveReasonText" rows="3" placeholder="Aapko chutti kyu chahiye..." required></textarea>
+              <label>Reason:</label>
+              <textarea id="leaveReasonText" rows="3" placeholder="Chutti ka kaaran..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary btn-full"><i class="fa-solid fa-paper-plane"></i> Leave Application Send Karein</button>
+            <button type="submit" class="btn btn-primary btn-full"><i class="fa-solid fa-paper-plane"></i> Send Application</button>
           </form>
         </div>
 
-        <!-- Leave Requests Inbox (Admin Action / User View Status) -->
         <div class="sub-section">
           <h3>Leave Applications Inbox</h3>
           <div class="table-responsive">
@@ -127,16 +118,14 @@
                   <th>Admin Action</th>
                 </tr>
               </thead>
-              <tbody id="leaveInboxBody">
-                <!-- Dynamic Leave Requests via JS -->
-              </tbody>
+              <tbody id="leaveInboxBody"></tbody>
             </table>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 3: Status Edit Requests -->
+    <!-- Change Requests -->
     <div id="changeRequestsCard" class="card">
       <div class="card-header">
         <h2><i class="fa-solid fa-code-pull-request"></i> Attendance Edit Requests</h2>
@@ -153,14 +142,12 @@
               <th>Admin Action</th>
             </tr>
           </thead>
-          <tbody id="changeRequestsBody">
-            <!-- Dynamic Edit Requests via JS -->
-          </tbody>
+          <tbody id="changeRequestsBody"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- Section 4: Analytics Report -->
+    <!-- Monthly Report -->
     <div class="card">
       <div class="card-header">
         <h2><i class="fa-solid fa-chart-pie"></i> Work & School Monthly Report</h2>
@@ -176,25 +163,23 @@
               <th>Total Leave (L)</th>
             </tr>
           </thead>
-          <tbody id="reportTableBody">
-            <!-- Dynamic Report via JS -->
-          </tbody>
+          <tbody id="reportTableBody"></tbody>
         </table>
       </div>
     </div>
 
   </div>
 
-  <!-- Modal for Attendance Change Request -->
+  <!-- Modal Requests -->
   <div id="requestModal" class="modal hidden">
     <div class="modal-content">
-      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <span class="close-btn" onclick="closeModal('requestModal')">&times;</span>
       <h3>Attendance Correction Request</h3>
-      <p id="modalSubText">System me already attendance mark hai. Update ke liye Admin ko request bhejein.</p>
+      <p id="modalSubText">System me already attendance mark hai.</p>
       <input type="hidden" id="reqMemberId" />
       <input type="hidden" id="reqDate" />
       <div class="form-group">
-        <label>Kaunsa Status Chahiye?</label>
+        <label>Status:</label>
         <select id="reqNewStatus">
           <option value="P">Present (P)</option>
           <option value="A">Absent (A)</option>
@@ -202,24 +187,312 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Reason (Aap status kyu badalna chahte hain?):</label>
-        <textarea id="reqReason" rows="3" placeholder="Sahi reason yahan likhein..." required></textarea>
+        <label>Reason:</label>
+        <textarea id="reqReason" rows="3" required></textarea>
       </div>
-      <button type="button" class="btn btn-primary btn-full" onclick="submitChangeRequest()">Request Admin Ko Bhejein</button>
+      <button type="button" class="btn btn-primary btn-full" onclick="submitChangeRequest()">Submit Request</button>
     </div>
   </div>
 
-  <!-- Modal for Admin PIN Auth -->
+  <!-- Login Modal -->
   <div id="loginModal" class="modal hidden">
     <div class="modal-content text-center">
-      <span class="close-btn" onclick="document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginModal').style.display='none';">&times;</span>
-      <h3><i class="fa-solid fa-lock"></i> Admin Authentication</h3>
-      <p>System Pin Enter Karein (Default Pin: <b>0534</b>)</p>
+      <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
+      <h3><i class="fa-solid fa-lock"></i> Admin Login</h3>
+      <p>PIN Enter Karein (Default: <b>0534</b>)</p>
       <input type="password" id="adminPinInput" class="pin-input" placeholder="****" maxlength="4" />
-      <button type="button" class="btn btn-success btn-full" onclick="if(document.getElementById('adminPinInput').value === '0534'){ window.isAdmin = true; document.getElementById('adminBadge').className = 'admin-badge badge-admin'; document.getElementById('adminBadge').innerHTML = '<i class=&quot;fa-solid fa-user-check&quot;></i> Admin Access'; document.getElementById('adminAuthBtn').innerHTML = '<i class=&quot;fa-solid fa-lock-open&quot;></i> Logout Admin'; document.getElementById('adminPanel').classList.remove('hidden'); document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginModal').style.display = 'none'; if(typeof refreshUI === 'function') refreshUI(); alert('Admin Login Successful!'); } else { alert('Galat PIN!'); } document.getElementById('adminPinInput').value = '';">Login as Admin</button>
+      <button type="button" class="btn btn-success btn-full" onclick="verifyAdminLogin()">Login</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- INLINE JAVASCRIPT (SINGLE FILE ARCHITECTURE) -->
+  <script>
+    // 1. FIREBASE INITIALIZATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbF7VdnNfFt8N9tA3xbbTvHi8JpSJ5PFw",
+      authDomain: "attendanceapp-7484d.firebaseapp.com",
+      databaseURL: "https://attendanceapp-7484d-default-rtdb.firebaseio.com",
+      projectId: "attendanceapp-7484d",
+      storageBucket: "attendanceapp-7484d.firebasestorage.app",
+      messagingSenderId: "163762786346",
+      appId: "1:163762786346:web:b3ca98f8d2dfee9923b353"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    // 2. STATE MANAGEMENT
+    let isAdmin = false;
+    let members = [
+      { id: '1', name: 'Aap (Self)', role: 'School Student', task: 'School Attendance' },
+      { id: '2', name: 'Sister', role: 'School Student', task: 'School Attendance' },
+      { id: '3', name: 'House Helper', role: 'Home Chores', task: 'Bartan & Jhadu Pocha' }
+    ];
+    let attendanceRecords = {};
+    let leaveRequests = [];
+    let changeRequests = [];
+
+    // 3. CORE FUNCTIONS
+    function listenCloudData() {
+      db.ref('attendance_system').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          if (Array.isArray(data.members) && data.members.length > 0) members = data.members;
+          if (data.attendance) attendanceRecords = data.attendance;
+          if (Array.isArray(data.leaves)) leaveRequests = data.leaves;
+          if (Array.isArray(data.changes)) changeRequests = data.changes;
+          refreshUI();
+        }
+      });
+    }
+
+    function syncToCloud() {
+      db.ref('attendance_system').set({
+        members: members,
+        attendance: attendanceRecords,
+        leaves: leaveRequests,
+        changes: changeRequests
+      });
+    }
+
+    function refreshUI() {
+      renderDropdowns();
+      renderAdminList();
+      renderAttendanceGrid();
+      renderLeaveInbox();
+      renderChangeRequests();
+      renderReport();
+    }
+
+    function saveData() {
+      refreshUI();
+      syncToCloud();
+    }
+
+    // 4. ADMIN & MODAL LOGIC
+    function openLoginModal() {
+      document.getElementById('loginModal').classList.remove('hidden');
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function verifyAdminLogin() {
+      const pin = document.getElementById('adminPinInput').value;
+      if (pin === '0534') {
+        isAdmin = true;
+        document.getElementById('adminBadge').className = 'admin-badge badge-admin';
+        document.getElementById('adminBadge').innerHTML = '<i class="fa-solid fa-user-check"></i> Admin Access';
+        document.getElementById('adminAuthBtn').innerHTML = '<i class="fa-solid fa-lock-open"></i> Logout Admin';
+        document.getElementById('adminPanel').classList.remove('hidden');
+        closeModal('loginModal');
+        refreshUI();
+        alert('Admin Login Successful!');
+      } else {
+        alert('Galat PIN!');
+      }
+      document.getElementById('adminPinInput').value = '';
+    }
+
+    // 5. MEMBER OPERATIONS
+    function handleAddMember() {
+      const nameInput = document.getElementById('newMemberName');
+      const roleSelect = document.getElementById('newMemberRole');
+      const name = nameInput.value.trim();
+      if (!name) return alert("Member ka naam likhein!");
+
+      const role = roleSelect ? roleSelect.value : 'Home Chores';
+      members.push({
+        id: 'm_' + Date.now(),
+        name: name,
+        role: role,
+        task: role === 'School Student' ? 'School Attendance' : 'Daily Chores'
+      });
+
+      nameInput.value = '';
+      saveData();
+      alert(name + " added!");
+    }
+
+    function deleteMember(id) {
+      if (confirm("Kya aap is member ko hatana chahte hain?")) {
+        members = members.filter(m => m.id !== id);
+        saveData();
+      }
+    }
+
+    function renderAdminList() {
+      const container = document.getElementById('adminMemberList');
+      if (!container) return;
+      container.innerHTML = '';
+      members.forEach(m => {
+        container.innerHTML += `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px; border-radius:6px; border:1px solid #ddd; margin-bottom:5px;">
+            <span><strong>${m.name}</strong> (${m.role})</span>
+            <button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="deleteMember('${m.id}')">Remove</button>
+          </div>
+        `;
+      });
+    }
+
+    function renderDropdowns() {
+      const select = document.getElementById('leaveMemberSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">Select Member</option>';
+      members.forEach(m => {
+        select.innerHTML += `<option value="${m.id}">${m.name} (${m.role})</option>`;
+      });
+    }
+
+    // 6. ATTENDANCE GRID
+    function renderAttendanceGrid() {
+      const dateVal = document.getElementById('attendanceDate').value;
+      const tbody = document.getElementById('attendanceGridBody');
+      if (!tbody || !dateVal) return;
+      tbody.innerHTML = '';
+
+      const dayRecords = attendanceRecords[dateVal] || {};
+
+      members.forEach(m => {
+        const currentStatus = dayRecords[m.id];
+        const isLocked = currentStatus !== undefined;
+
+        let statusBtns = '';
+        if (isLocked && !isAdmin) {
+          statusBtns = `<span class="status-badge badge-${currentStatus.toLowerCase()}">${currentStatus}</span> (Locked)`;
+        } else {
+          statusBtns = `
+            <button class="pal-btn ${currentStatus === 'P' ? 'active-P' : ''}" onclick="markAttendance('${m.id}', 'P')">P</button>
+            <button class="pal-btn ${currentStatus === 'A' ? 'active-A' : ''}" onclick="markAttendance('${m.id}', 'A')">A</button>
+            <button class="pal-btn ${currentStatus === 'L' ? 'active-L' : ''}" onclick="markAttendance('${m.id}', 'L')">L</button>
+          `;
+        }
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${m.name}</strong></td>
+            <td>${m.role}</td>
+            <td>${m.task}</td>
+            <td>${statusBtns}</td>
+            <td>${isLocked && !isAdmin ? `<button class="btn btn-outline" style="padding:2px 6px; font-size:11px;" onclick="openReqModal('${m.id}', '${m.name}', '${dateVal}')">Request Edit</button>` : 'Ready'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function markAttendance(memberId, status) {
+      const date = document.getElementById('attendanceDate').value;
+      if (!date) return alert("Tareekh select karein!");
+      if (!attendanceRecords[date]) attendanceRecords[date] = {};
+      attendanceRecords[date][memberId] = status;
+      saveData();
+    }
+
+    // 7. LEAVE & EDIT REQUESTS
+    function handleLeaveSubmit(e) {
+      e.preventDefault();
+      const mId = document.getElementById('leaveMemberSelect').value;
+      const from = document.getElementById('leaveFromDate').value;
+      const to = document.getElementById('leaveToDate').value;
+      const reason = document.getElementById('leaveReasonText').value.trim();
+
+      leaveRequests.push({ id: Date.now().toString(), memberId: mId, from, to, reason, status: 'Pending' });
+      document.getElementById('leaveReasonText').value = '';
+      saveData();
+      alert("Application Submitted!");
+    }
+
+    function renderLeaveInbox() {
+      const tbody = document.getElementById('leaveInboxBody');
+      if (!tbody) return;
+      tbody.innerHTML = leaveRequests.length === 0 ? '<tr><td colspan="5">No Requests</td></tr>' : '';
+      leaveRequests.forEach(l => {
+        const m = members.find(x => x.id === l.memberId) || { name: 'Unknown' };
+        let action = l.status;
+        if (isAdmin && l.status === 'Pending') {
+          action = `<button onclick="updateLeave('${l.id}', 'Approved')">Approve</button> <button onclick="updateLeave('${l.id}', 'Rejected')">Reject</button>`;
+        }
+        tbody.innerHTML += `<tr><td>${m.name}</td><td>${l.from} - ${l.to}</td><td>${l.reason}</td><td>${l.status}</td><td>${action}</td></tr>`;
+      });
+    }
+
+    function updateLeave(id, status) {
+      const l = leaveRequests.find(x => x.id === id);
+      if (l) { l.status = status; saveData(); }
+    }
+
+    function openReqModal(mId, name, date) {
+      document.getElementById('reqMemberId').value = mId;
+      document.getElementById('reqDate').value = date;
+      document.getElementById('requestModal').classList.remove('hidden');
+      document.getElementById('requestModal').style.display = 'flex';
+    }
+
+    function submitChangeRequest() {
+      const mId = document.getElementById('reqMemberId').value;
+      const date = document.getElementById('reqDate').value;
+      const status = document.getElementById('reqNewStatus').value;
+      const reason = document.getElementById('reqReason').value.trim();
+
+      changeRequests.push({ id: Date.now().toString(), memberId: mId, date, newStatus: status, reason, status: 'Pending' });
+      closeModal('requestModal');
+      saveData();
+      alert("Edit Request Sent!");
+    }
+
+    function renderChangeRequests() {
+      const tbody = document.getElementById('changeRequestsBody');
+      if (!tbody) return;
+      tbody.innerHTML = changeRequests.length === 0 ? '<tr><td colspan="6">No Requests</td></tr>' : '';
+      changeRequests.forEach(c => {
+        const m = members.find(x => x.id === c.memberId) || { name: 'Unknown' };
+        let action = c.status;
+        if (isAdmin && c.status === 'Pending') {
+          action = `<button onclick="approveChange('${c.id}')">Approve</button>`;
+        }
+        tbody.innerHTML += `<tr><td>${m.name}</td><td>${c.date}</td><td>${c.newStatus}</td><td>${c.reason}</td><td>${c.status}</td><td>${action}</td></tr>`;
+      });
+    }
+
+    function approveChange(id) {
+      const c = changeRequests.find(x => x.id === id);
+      if (c) {
+        c.status = 'Approved';
+        if (!attendanceRecords[c.date]) attendanceRecords[c.date] = {};
+        attendanceRecords[c.date][c.memberId] = c.newStatus;
+        saveData();
+      }
+    }
+
+    function renderReport() {
+      const tbody = document.getElementById('reportTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      members.forEach(m => {
+        let p = 0, a = 0, l = 0;
+        Object.keys(attendanceRecords).forEach(d => {
+          const st = attendanceRecords[d][m.id];
+          if (st === 'P') p++; if (st === 'A') a++; if (st === 'L') l++;
+        });
+        tbody.innerHTML += `<tr><td>${m.name}</td><td>${m.role}</td><td>${p} P</td><td>${a} A</td><td>${l} L</td></tr>`;
+      });
+    }
+
+    // INITIALIZATION
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0];
+      if (document.getElementById('attendanceDate')) document.getElementById('attendanceDate').value = today;
+      if (document.getElementById('leaveFromDate')) document.getElementById('leaveFromDate').value = today;
+      if (document.getElementById('leaveToDate')) document.getElementById('leaveToDate').value = today;
+      
+      listenCloudData();
+      refreshUI();
+    });
+  </script>
 </body>
 </html>
